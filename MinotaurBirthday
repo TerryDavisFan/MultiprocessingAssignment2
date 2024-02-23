@@ -1,0 +1,89 @@
+import java.util.Scanner;
+import java.util.concurrent.Semaphore;
+
+public class MinotaurBirthday {
+	
+	//minotaur puts out a sign
+	//guest are responsible for marking when they have had a cupcake
+	static int c;
+	
+	public static void main(String[] args) {
+		//create a semaphore to represent a cupcake
+		Semaphore cupcake = new Semaphore(1);
+		
+		//get number of guest
+		System.out.print("How many guest: ");
+		Scanner kb = new Scanner(System.in);
+		int N = kb.nextInt();
+		
+		//array of guest
+		Guest[] guests = new Guest[N];
+		for(int i = 0; i < N; i++) {
+			guests[i] = new Guest(i, cupcake);
+		}
+		
+		//check if all guests have gone
+		while(c < N) {
+			//let a random guest into the maze
+			int i = (int)(Math.random() * N);
+			if(guests[i].getState() == Thread.State.NEW)
+				guests[i].start();
+			else
+				guests[i].run();
+		}
+		
+		//The minotaur now knows that all guests have gone
+	}
+	
+	public static void inc() {
+		c++;
+	}
+}
+
+class Guest extends Thread {
+	int i;
+	Semaphore cupcake;
+	boolean hasTold;
+	
+	
+	
+	//constructor
+	public Guest(int i, Semaphore cupcake) {
+		this.i = i;
+		this.cupcake = cupcake;
+		hasTold = false;
+	}
+	
+	//override
+	public void run() {
+		//if there was an actual maze to for the guest to solve
+		//I would implement a backtracking solution here
+		//There isn't so I ask that you imagine there is
+		if(solve());
+		
+		//see if guest has access to the cupcake
+		try {
+			//guests is either taking an already present cupcake or requesting one after the previous guest has finished
+			cupcake.acquire();
+			
+			//simulate time for guest to eat a cupcake
+			sleep(100);
+			
+			System.out.println("Guest " + i + " has had a cupcake");
+			
+			if(!hasTold) {
+				hasTold = true;
+				MinotaurBirthday.inc();
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		//request a cupcake when guest is done
+		cupcake.release();
+	}
+	
+	public boolean solve() {
+		return true;
+	}
+}
