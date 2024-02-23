@@ -1,0 +1,118 @@
+
+import java.util.Scanner;
+import java.util.concurrent.Semaphore;
+
+public class MinotaurVase {
+	public static void main(String[]args) {
+		//Use a semaphore to represent access to the vase
+		Semaphore vase = new Semaphore(1);
+		
+		//get number of guest
+		System.out.print("How many guest: ");
+		Scanner kb = new Scanner(System.in);
+		int N = kb.nextInt();
+				
+		while(N < 1) {
+			System.out.print("How many guest (IT SHOULD BE AT LEAST ONE): ");
+			N = kb.nextInt();
+		}
+		
+		//create a list of guest and an empty queue
+		GuestV[] list = new GuestV[N];
+		Queue q = new Queue(N);
+		
+		for(int i = 0; i < N; i++) {
+			list[i] = new GuestV(vase, i);
+		}
+		
+		//we assume that the party last long enough for each guest to appreciate the vase at least twice
+		int c = 0;
+		while(c < N * 2) {
+			//pick a random guest to queue
+			int i = (int)(Math.random() * N);
+			//queue that guest
+			q.enq(list[i]);
+			
+			//dequeue next guest
+			GuestV temp = q.deq();
+			if(temp.getState() == Thread.State.NEW)
+			{
+				temp.start();
+			}
+			else {
+				temp.run();
+			}
+			
+			//increment
+			c++;
+		}
+	}
+}
+
+class Queue {
+	int head = 0;
+	int tail = 0;
+	GuestV[] queue;
+	int size;
+	
+	public Queue(int size) {
+		queue = new GuestV[size];
+		this.size = size;
+	}
+	
+	//queue new guest
+	public void enq(GuestV x) {
+		//if queue is full, wait for space to become available
+		while (tail - head == size) {};
+		//put item into next available space
+		queue[tail % size] = x;
+		tail++;
+	}
+	
+	//dequeue next guest
+	public GuestV deq() {
+		//if queue is empty, wait for guest to enter it
+		while(tail - head == 0) {};
+		//get next guest
+		GuestV x = queue[head % size];
+		head++;
+		return x;
+	}
+	
+	public String toString() {
+		String s = "";
+		for(int i = head; i < tail; i++) {
+			s = s + " " + queue[i % size].toString();
+		}
+		return s;
+	}
+}
+
+class GuestV extends Thread {
+	Semaphore vase;
+	int i;
+	
+	public GuestV(Semaphore vase, int i) {
+		this.vase = vase;
+		this.i = i;
+	}
+	
+	public void run() {
+		try {
+			//get access to the vase
+			vase.acquire();
+			
+			sleep(100);
+			
+			System.out.println("Guest " + i + " has seen the vase");
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		vase.release();
+	}
+	
+	public String toString() {
+		return "" + i;
+	}
+}
