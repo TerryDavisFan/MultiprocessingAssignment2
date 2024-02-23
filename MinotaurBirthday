@@ -1,3 +1,4 @@
+
 import java.util.Scanner;
 import java.util.concurrent.Semaphore;
 
@@ -16,10 +17,24 @@ public class MinotaurBirthday {
 		Scanner kb = new Scanner(System.in);
 		int N = kb.nextInt();
 		
+		while(N < 1) {
+			System.out.print("How many guest (IT SHOULD BE AT LEAST ONE): ");
+			N = kb.nextInt();
+		}
+		
+		//let the user decide how long it takes to eat a cupcake
+		System.out.print("How long would a guest take to eat a cupcake: ");
+		int t = kb.nextInt();
+		while(t < 0)
+		{
+			System.out.print("How long would a guest take to eat a cupcake (IT SHOULD BE AT LEAST ZERO): ");
+			t = kb.nextInt();
+		}
+		
 		//array of guest
 		Guest[] guests = new Guest[N];
 		for(int i = 0; i < N; i++) {
-			guests[i] = new Guest(i, cupcake);
+			guests[i] = new Guest(i, cupcake, t);
 		}
 		
 		//check if all guests have gone
@@ -41,15 +56,16 @@ public class MinotaurBirthday {
 }
 
 class Guest extends Thread {
-	int i;
+	int i, t;
 	Semaphore cupcake;
 	boolean hasTold;
 	
 	
 	
 	//constructor
-	public Guest(int i, Semaphore cupcake) {
+	public Guest(int i, Semaphore cupcake, int t) {
 		this.i = i;
+		this.t = t;
 		this.cupcake = cupcake;
 		hasTold = false;
 	}
@@ -67,10 +83,11 @@ class Guest extends Thread {
 			cupcake.acquire();
 			
 			//simulate time for guest to eat a cupcake
-			sleep(100);
+			sleep(t);
 			
 			System.out.println("Guest " + i + " has had a cupcake");
 			
+			//let the minotaur know guest has had a cupcake
 			if(!hasTold) {
 				hasTold = true;
 				MinotaurBirthday.inc();
@@ -79,7 +96,7 @@ class Guest extends Thread {
 			e.printStackTrace();
 		}
 		
-		//request a cupcake when guest is done
+		//leave an empty plate
 		cupcake.release();
 	}
 	
